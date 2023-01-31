@@ -15,6 +15,12 @@ const print = (content) => {
   console.log(content);
 }
 
+// signin  (/signin)
+// signup  (/signup)
+// addlink (/link-page/add-link)
+// getlink (/link-page/${details.id})
+// dellink (/link-page/delete-link)
+
 // Using promises
 
 // router.post('/signup', (req, res) => {
