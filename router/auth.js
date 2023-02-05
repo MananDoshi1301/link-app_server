@@ -2,6 +2,7 @@ require('../db/conn');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/userSchema');
+const jwt = require('jsonwebtoken');
 const Links = require('../models/linkSchema');
 
 const router = express.Router();
@@ -90,15 +91,24 @@ router.post('/signin', async (req, res) => {
     const userExist = await User.findOne({ email: email });
     // console.log(userExist._id);
     if (!userExist) {
-      res.status(400).json({ message: "User Error", error: true });
+      res.status(400).json({ message: "Please enter correct user credentials", error: true });
     }
     else {
       const isPasswordCorrect = await bcrypt.compare(password, userExist.password);
-      if (isPasswordCorrect) res.json({ message: "User signed in succesfully!", id: userExist._id, error: false });
-      else res.json({ message: "Incorrect username or password", error: true });
+      if (isPasswordCorrect == false) res.json({ message: "Incorrect username or password", error: true });
+      else {
+        const resData = {
+          userid: userExist._id
+        }
+
+        const jwtAuthToken = jwt.sign(resData, process.env.JWT_ACCESS_TOKEN);
+        // res.json({ message: "User signed in succesfully!", id: userExist._id, error: false });
+        res.json({ message: "User signed in succesfully!", authToken: jwtAuthToken, error: false });
+      }
     }
 
   } catch (err) {
+    res.status(500).send("Internal Server Error");
     console.log(err);
   }
 });
