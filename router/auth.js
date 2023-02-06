@@ -5,6 +5,8 @@ const User = require('../models/userSchema');
 const jwt = require('jsonwebtoken');
 const Links = require('../models/linkSchema');
 
+const authUser = require('../middleware/authUser');
+
 const router = express.Router();
 
 
@@ -113,10 +115,12 @@ router.post('/signin', async (req, res) => {
   }
 });
 
-router.post('/link-page/delete-link', async (req, res) => {
+// Optimised with jwt auth
+router.post('/link-page/delete-link', authUser, async (req, res) => {
 
+  const userId = req.data.userid;
   try {
-    const { userId, linkId } = req.body;
+    const { linkId } = req.body;
 
     if (!userId) return res.status(422).json({ message: "Cannot retrieve user id!", error: true });
 
@@ -140,8 +144,9 @@ router.post('/link-page/delete-link', async (req, res) => {
   }
 })
 
-router.get('/link-page/:id', async (req, res) => {
-  // console.log(req.params.id)
+// Old method with params and no jwt
+router.get('/link-page/:id', authUser, async (req, res) => {
+  // console.log(req.params)
 
   try {
     const data = await Links.find({ userid: req.params.id });
@@ -166,10 +171,40 @@ router.get('/link-page/:id', async (req, res) => {
   // res.json({ message: 'done' })
 })
 
-router.post('/link-page/add-link', async (req, res) => {
-
+// New token based get link getrequest
+router.get('/link-page/', authUser, async (req, res) => {
+  // console.log(req.params)
+  const userid = req.data.userid;
+  // console.log(userid);
   try {
-    const { userid, links } = req.body;
+    const data = await Links.find({ userid });
+    // res.json(data);    
+    if (data.length === 0) {
+      res.status(404).json({
+        message: "User does not exist",
+        error: true
+      })
+    }
+    else {
+      res.json({
+        message: "success",
+        error: false,
+        data: data[0].links
+      })
+    }
+  } catch (err) {
+    console.log(err);
+  }
+  // res.json({ message: 'done' })
+})
+
+// Optimised with jwt token
+router.post('/link-page/add-link', authUser, async (req, res) => {
+
+  const data = req.data;
+  userid = data.userid;
+  try {
+    const { links } = req.body;
     const { title, url, isValidUrl } = links;
     // console.log(userid, title, url)
     if (!userid || !title || !url) {
@@ -184,7 +219,7 @@ router.post('/link-page/add-link', async (req, res) => {
     if (doesUserDocExist.length == 0) {
       // print("Adding new doc")
       const linkDoc = new Links({ userid, links: [{ title, url, isValidUrl }] });
-      const savedDoc = await linkDoc.save();
+      // const savedDoc = await linkDoc.save();
 
       if (savedDoc) res.status(201).json({
         message: "Link added succesfully", error: false
