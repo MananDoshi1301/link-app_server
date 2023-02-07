@@ -118,15 +118,15 @@ router.post('/signin', async (req, res) => {
 // Optimised with jwt auth
 router.post('/link-page/delete-link', authUser, async (req, res) => {
 
-  const userId = req.data.userid;
+  const userid = req.user.userid;
   try {
     const { linkId } = req.body;
 
-    if (!userId) return res.status(422).json({ message: "Cannot retrieve user id!", error: true });
+    if (!userid) return res.status(422).json({ message: "Cannot retrieve user id!", error: true });
 
     if (!linkId) return res.status(422).json({ message: "Invalid LinkId!", error: true });
 
-    const linkDelete = await Links.updateOne({ userid: userId }, {
+    const linkDelete = await Links.updateOne({ userid: userid }, {
       $pull: {
         links: {
           "_id": linkId
@@ -173,9 +173,8 @@ router.get('/link-page/:id', authUser, async (req, res) => {
 
 // New token based get link getrequest
 router.get('/link-page/', authUser, async (req, res) => {
-  // console.log(req.params)
-  const userid = req.data.userid;
-  // console.log(userid);
+
+  const userid = req.user.userid;
   try {
     const data = await Links.find({ userid });
     // res.json(data);    
@@ -201,8 +200,7 @@ router.get('/link-page/', authUser, async (req, res) => {
 // Optimised with jwt token
 router.post('/link-page/add-link', authUser, async (req, res) => {
 
-  const data = req.data;
-  userid = data.userid;
+  const userid = req.user.userid;
   try {
     const { links } = req.body;
     const { title, url, isValidUrl } = links;
