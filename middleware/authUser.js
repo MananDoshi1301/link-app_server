@@ -2,8 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const authUser = (req, res, next) => {
 
-  const tokenString = req.header('authorization');
-  const token = tokenString && tokenString.split(" ")[1];
+  const token = req.header('Authorization');
   if (!token) {
     res.status(401).json({
       message: "Please authenticate using a valid token",
@@ -11,15 +10,9 @@ const authUser = (req, res, next) => {
     })
   }
   try {
-    const data = jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (err, user) => {
-      if (err) {
-        res.status(403).json({
-          message: "Please authenticate using a valid token",
-          error: true
-        })
-      }
-      req.user = user;
-    });
+    const baseToken = token.split(" ")[1]
+    const data = jwt.verify(baseToken, process.env.JWT_ACCESS_TOKEN);
+    req.data = data;
     next();
   } catch (error) {
     console.log(error)
@@ -27,7 +20,7 @@ const authUser = (req, res, next) => {
       message: "Internal Server Error",
       error: true
     });
-
+    // next()
   }
 }
 
